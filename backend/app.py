@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from newspaper import Article
 import requests
+import openai
 
 load_dotenv()
 
@@ -63,7 +64,24 @@ def parse_recipe():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+    
+@app.route('/recomendations', methods=['POST'])
+def recomendations():
+    data = request.get_json()
+    user_input = data.get('user_input')
 
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=f"Suggest some recipes based on these ingredients: {user_input}",
+        max_tokens=150,
+        n=5,
+        stop=None,
+        temperature=0.7
+    )
+
+    return jsonify({
+    "suggestions": [r.strip() for r in response.choices[0].text.split('\n')]
+})
 
 @app.route('/api/search', methods=['GET'])
 def search_recipes():
@@ -79,9 +97,9 @@ def search_recipes():
     }
 
 
-    response = requests.get(url, params=params)
-    if response.ok:
-        return jsonify(response.json())
+    spoon_response = requests.get(url, params=params)
+    if spoon_response.ok:
+        return jsonify(spoon_response.json())
     else:
         return jsonify({"error": "Spoonacular API error"}), 500 
 
