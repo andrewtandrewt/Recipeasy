@@ -12,14 +12,18 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-tabs": "^1.1.13",
+    "cheerio": "^1.1.2",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
+    "openai": "^6.1.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/axios": "^0.14.4",
+    "@types/cheerio": "^1.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
