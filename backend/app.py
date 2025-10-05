@@ -214,8 +214,12 @@ def search_recipes():
         spoonacular_data = spoonacular_response.json()
         return jsonify(spoonacular_data)
     else:
+<<<<<<< HEAD
         return jsonify({"error": "Failed to fetch search results"}), 500
 
+=======
+        return jsonify({"error": "Spoonacular API error"}), 500
+>>>>>>> ff3af6d149018a249fc3df719519cd2dcddb4d37
     
 
 
@@ -249,6 +253,11 @@ def get_recipe(id):
     if recipe:
         return jsonify(recipe)
     return jsonify({"error": "Recipe not found"}), 404
+<<<<<<< HEAD
+=======
+        return jsonify({"error": "Failed to fetch search results"}), 500
+
+>>>>>>> ff3af6d149018a249fc3df719519cd2dcddb4d37
 
 if __name__ == '__main__':
     app.run(port=3002, debug=True)
