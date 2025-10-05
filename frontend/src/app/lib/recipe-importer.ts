@@ -1,11 +1,7 @@
+
 import axios from 'axios'
 import * as cheerio from 'cheerio'
-import OpenAI from 'openai'
 import { ImportedRecipe } from './types'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 export class RecipeImporter {
   static async importFromUrl(url: string): Promise<ImportedRecipe | null> {
@@ -25,40 +21,21 @@ export class RecipeImporter {
 
   static async importFromText(text: string): Promise<ImportedRecipe | null> {
     try {
-      const prompt = `
-        Extract recipe information from the following text and return it as a JSON object with this structure:
-        {
-          "title": "Recipe title",
-          "description": "Brief description",
-          "ingredients": [{"name": "ingredient name", "amount": "quantity", "unit": "unit"}],
-          "steps": [{"order": 1, "instruction": "step instruction"}],
-          "cookingTime": 30,
-          "servings": 4,
-          "difficulty": "easy|medium|hard",
-          "cuisine": "cuisine type"
-        }
-
-        Text: ${text}
-      `
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.3,
-      })
-
-      const content = response.choices[0]?.message?.content
-      if (!content) return null
-
-      const recipeData = JSON.parse(content)
+      // Call your Flask backend API instead of Gemini directly
+      const response = await axios.post('http://localhost:3002/api/gemini', {
+        prompt: `Extract recipe information from the following text and return it as a JSON object with this structure:\n{\n  "title": "Recipe title",\n  "description": "Brief description",\n  "ingredients": [{"name": "ingredient name", "amount": "quantity", "unit": "unit"}],\n  "steps": [{"order": 1, "instruction": "step instruction"}],\n  "cookingTime": 30,\n  "servings": 4,\n  "difficulty": "easy|medium|hard",\n  "cuisine": "cuisine type"\n}\nText: ${text}`
+      });
+      const content = response.data.result;
+      if (!content) return null;
+      const recipeData = JSON.parse(content);
       return {
         ...recipeData,
         sourceUrl: '',
         sourceType: 'text' as const
-      }
+      };
     } catch (error) {
-      console.error('Error parsing recipe text:', error)
-      return null
+      console.error('Error parsing recipe text:', error);
+      return null;
     }
   }
 

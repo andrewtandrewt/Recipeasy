@@ -27,38 +27,26 @@ export default function RecipeImportForm({onImport, isLoading = false }: RecipeI
     const [error, setError] = useState('')
 
     const handleTextImport = async () => {
-    if (!text.trim()) {
-      setError('Please enter recipe text')
-      return
-    }
-
-    setIsImporting(true)
-    setError('')
-
-    try {
-      const response = await fetch('/api/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'text', data: { text } })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Import failed')
+      if (!text.trim()) {
+        setError('Please enter recipe text');
+        return;
       }
-      
-      const recipe = await response.json()
-      if (recipe) {
-        onImport(recipe)
-        setText('')
-      } else {
-        setError('Could not parse recipe from text. Please try again.')
+      setIsImporting(true);
+      setError('');
+      try {
+        const recipe = await RecipeImporter.importFromText(text);
+        if (recipe) {
+          onImport(recipe);
+          setText('');
+        } else {
+          setError('Could not parse recipe from text. Please try again.');
+        }
+      } catch (error) {
+        setError('Failed to parse recipe. Please try again.');
+      } finally {
+        setIsImporting(false);
       }
-    } catch (error) {
-      setError('Failed to parse recipe. Please try again.')
-    } finally {
-      setIsImporting(false)
     }
-  }
 
     const handleUrlImport = async () => {
     if (!url.trim()) {

@@ -3,43 +3,42 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from newspaper import Article
 import requests
-import openai
+import google.generativeai as genai
+from flask_cors import CORS
 
+# Load environment variables
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
 
-app = Flask(__name__)
+# Configure Gemini API
+genai.configure(api_key=GEMINI_API_KEY)
 
-@app.route('/api/openai', methods=['POST'])
-def openai_api():
+app = Flask(__name__)
+CORS(app)
+
+# ----------------------------
+# Gemini API route (replaces OpenAI)
+# ----------------------------
+@app.route('/api/gemini', methods=['POST'])
+def gemini_api():
     data = request.get_json()
     prompt = data.get('prompt')
-    headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": "gpt-3.5-turbo",
-        "messages": [{"role": "user", "content": prompt}]
-    }
-    response = requests.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers=headers,
-        json=payload
-    )
-    if response.ok:
-        content = response.json()["choices"][0]["message"]["content"]
-        return jsonify({"result": content})
-    else:
-        return jsonify({"error": "OpenAI API error"}), 500
 
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        return jsonify({"result": response.text})
+    except Exception as e:
+        return jsonify({"error": f"Gemini API error: {str(e)}"}), 500
+
+# ----------------------------
+# Get recipe info (Spoonacular)
+# ----------------------------
 @app.route('/api/recipe/<int:recipe_id>', methods=['GET'])
 def get_recipe(recipe_id):
-    params = {
-        "apiKey": SPOONACULAR_API_KEY
-    }
+    params = {"apiKey": SPOONACULAR_API_KEY}
     url = f"https://api.spoonacular.com/recipes/{recipe_id}/information"
     response = requests.get(url, params=params)
     if response.ok:
@@ -47,12 +46,16 @@ def get_recipe(recipe_id):
     else:
         return jsonify({"error": "Spoonacular API error"}), 500
 
+# ----------------------------
+# Parse recipe from URL
+# ----------------------------
 @app.route('/parse', methods=['POST'])
 def parse_recipe():
     data = request.get_json()
     url = data.get('url')
     if not url:
         return jsonify({"error": "No URL provided"}), 400
+
     article = Article(url)
     try:
         article.download()
@@ -63,26 +66,28 @@ def parse_recipe():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-    
-@app.route('/recomendations', methods=['POST'])
-def recomendations():
+
+# ----------------------------
+# Recipe recommendations (Gemini)
+# ----------------------------
+@app.route('/recommendations', methods=['POST'])
+def recommendations():
     data = request.get_json()
     user_input = data.get('user_input')
 
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=f"Suggest some recipes based on these ingredients: {user_input}",
-        max_tokens=150,
-        n=5,
-        stop=None,
-        temperature=0.7
-    )
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        prompt = f"Suggest some recipes based on these ingredients: {user_input}"
+        response = model.generate_content(prompt)
 
-    return jsonify({
-    "suggestions": [r.strip() for r in response.choices[0].text.split('\n')]
-})
+        suggestions = response.text.strip().split("\n")
+        return jsonify({"suggestions": suggestions})
+    except Exception as e:
+        return jsonify({"error": f"Gemini API error: {str(e)}"}), 500
 
+# ----------------------------
+# Search recipes (Spoonacular)
+# ----------------------------
 @app.route('/api/search', methods=['GET'])
 def search_recipes():
     query = request.args.get('query')
@@ -96,12 +101,11 @@ def search_recipes():
         "number": 10
     }
 
-
     spoon_response = requests.get(url, params=params)
     if spoon_response.ok:
         return jsonify(spoon_response.json())
     else:
-        return jsonify({"error": "Spoonacular API error"}), 500 
+        return jsonify({"error": "Spoonacular API error"}), 500
 
 if __name__ == '__main__':
     app.run(port=3002, debug=True)
