@@ -8,14 +8,74 @@ import { Input } from './ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 import { Link, Upload, FileText, Youtube, Music } from 'lucide-react'
+import { ImportedRecipe } from '../lib/types'
+import { isValidUrl } from '../lib/utils'
+import { RecipeImporter } from '../lib/recipe-importer'
 
-export default function RecipeImportForm() {
+interface RecipeImportFormProps {
+  onImport: (recipe: ImportedRecipe) => void
+  isLoading?: boolean
+}
+
+
+export default function RecipeImportForm({onImport, isLoading = false }: RecipeImportFormProps) {
 	const [recipe, setRecipe] = useState("");
 	const [submitted, setSubmitted] = useState(false);
     const [url, setUrl] = useState('')
     const [text, setText] = useState('')
     const [isImporting, setIsImporting] = useState(false)
     const [error, setError] = useState('')
+
+    const handleTextImport = async () => {
+      if (!text.trim()) {
+        setError('Please enter recipe text');
+        return;
+      }
+      setIsImporting(true);
+      setError('');
+      try {
+        const recipe = await RecipeImporter.importFromText(text);
+        if (recipe) {
+          onImport(recipe);
+          setText('');
+        } else {
+          setError('Could not parse recipe from text. Please try again.');
+        }
+      } catch (error) {
+        setError('Failed to parse recipe. Please try again.');
+      } finally {
+        setIsImporting(false);
+      }
+    }
+
+    const handleUrlImport = async () => {
+    if (!url.trim()) {
+      setError('Please enter a URL')
+      return
+    }
+
+    if (!isValidUrl(url)) {
+      setError('Please enter a valid URL')
+      return
+    }
+
+    setIsImporting(true)
+    setError('')
+
+    try {
+      const recipe = await RecipeImporter.importFromUrl(url)
+      if (recipe) {
+        onImport(recipe)
+        setUrl('')
+      } else {
+        setError('Could not import recipe from this URL. Please try a different source.')
+      }
+    } catch (error) {
+      setError('Failed to import recipe. Please try again.')
+    } finally {
+      setIsImporting(false)
+    }
+  }
 
 
 
@@ -62,19 +122,19 @@ export default function RecipeImportForm() {
                 placeholder="https://example.com/recipe"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                //disabled={isImporting || isLoading}
+                disabled={isImporting || isLoading}
               />
               <p className="text-xs text-muted-foreground">
                 Paste a link to a recipe from any website
               </p>
             </div>
             <Button 
-            //   onClick={handleUrlImport} 
-              //disabled={isImporting || isLoading}
+              onClick={handleUrlImport} 
+              disabled={isImporting || isLoading}
               className="w-full"
             >
                 
-              {/* {isImporting ? 'Importing...' : 'Import from URL'} */}
+              {isImporting ? 'Importing...' : 'Import from URL'}
             </Button>
           </TabsContent>
 
@@ -88,18 +148,18 @@ export default function RecipeImportForm() {
                 placeholder="https://youtube.com/watch?v=..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                // disabled={isImporting || isLoading}
+                disabled={isImporting || isLoading}
               />
               <p className="text-xs text-muted-foreground">
                 Paste a YouTube video URL with a recipe
               </p>
             </div>
             <Button 
-            //   onClick={handleUrlImport} 
-            //   disabled={isImporting || isLoading}
+              onClick={handleUrlImport} 
+              disabled={isImporting || isLoading}
               className="w-full"
             >
-              {/* {isImporting ? 'Importing...' : 'Import from YouTube'} */}
+              {isImporting ? 'Importing...' : 'Import from YouTube'}
             </Button>
           </TabsContent>
 
@@ -112,7 +172,7 @@ export default function RecipeImportForm() {
                 placeholder="Paste your recipe text here..."
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                // disabled={isImporting || isLoading}
+                disabled={isImporting || isLoading}
                 rows={8}
               />
               <p className="text-xs text-muted-foreground">
@@ -120,7 +180,7 @@ export default function RecipeImportForm() {
               </p>
             </div>
             <Button 
-            //   onClick={handleTextImport} 
+               onClick={handleTextImport} 
             //   disabled={isImporting || isLoading}
               className="w-full"
             >
