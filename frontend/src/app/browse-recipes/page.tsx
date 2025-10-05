@@ -126,7 +126,7 @@ export default function RecipesPage() {
               Discover amazing recipes from around the world
             </p>
           </div>
-          <Link href="/recipes/new">
+          <Link href="/add-recipe">
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
               Add Recipe
@@ -230,7 +230,7 @@ export default function RecipesPage() {
             <p className="text-muted-foreground mb-6">
               Try adjusting your search terms or filters
             </p>
-            <Link href="/recipes/new">
+            <Link href="/add-recipe">
               <Button>Import Your First Recipe</Button>
             </Link>
           </div>

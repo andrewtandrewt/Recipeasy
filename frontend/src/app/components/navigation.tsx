@@ -1,14 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useSession, signIn, signOut } from 'next-auth/react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Search, Plus, User, LogOut, LogIn } from 'lucide-react'
 import { useState } from 'react'
 
 export function Navigation() {
-  const { data: session } = useSession()
   const [searchQuery, setSearchQuery] = useState('')
 
   const handleSearch = (e: React.FormEvent) => {
@@ -52,7 +50,7 @@ export function Navigation() {
               </Button>
             </Link>
 
-            {session ? (
+            {/* {session ? (
               <>
                 <Link href="/recipes/new">
                   <Button className="gap-2">
@@ -94,7 +92,7 @@ export function Navigation() {
                 <LogIn className="h-4 w-4" />
                 Sign In
               </Button>
-            )}
+            )} */}
           </div>
         </div>
       </div>

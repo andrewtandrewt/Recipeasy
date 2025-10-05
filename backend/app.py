@@ -9,6 +9,32 @@ from flask_cors import CORS
 # Load environment variables
 load_dotenv()
 
+# In-memory storage for saved recipes 
+saved_recipes = {"1": {
+  "title": "Spaghetti Aglio e Olio",
+  "description": "A simple and classic Italian spaghetti with garlic, olive oil, and chili flakes.",
+  "ingredients": [
+    { "name": "spaghetti", "amount": "12", "unit": "oz" },
+    { "name": "garlic cloves, thinly sliced", "amount": "4", "unit": "" },
+    { "name": "extra virgin olive oil", "amount": "1/3", "unit": "cup" },
+    { "name": "red chili flakes", "amount": "1", "unit": "tsp" },
+    { "name": "fresh parsley, chopped", "amount": "1/4", "unit": "cup" },
+    { "name": "salt", "amount": "to taste", "unit": "" },
+    { "name": "grated Parmesan cheese (optional)", "amount": "1/4", "unit": "cup" }
+  ],
+  "steps": [
+    { "order": 1, "instruction": "Bring a large pot of salted water to a boil and cook spaghetti until al dente. Reserve 1/2 cup of pasta water before draining." },
+    { "order": 2, "instruction": "In a large skillet, heat olive oil over medium heat. Add garlic slices and chili flakes, cooking until garlic is golden but not burnt." },
+    { "order": 3, "instruction": "Add the drained spaghetti to the skillet and toss to coat in the garlic-chili oil. Add reserved pasta water a little at a time if needed to loosen." },
+    { "order": 4, "instruction": "Remove from heat, mix in chopped parsley, and season with salt to taste." },
+    { "order": 5, "instruction": "Serve hot, optionally topped with grated Parmesan cheese." }
+  ],
+  "cookingTime": 20,
+  "servings": 4,
+  "difficulty": "easy",
+  "cuisine": "Italian"
+}}
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
 
@@ -16,7 +42,7 @@ SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["http://localhost:3001"])
 
 # ----------------------------
 # Gemini API route (replaces OpenAI)
@@ -108,6 +134,30 @@ def search_recipes():
         return jsonify(spoon_response.json())
     else:
         return jsonify({"error": "Spoonacular API error"}), 500
+    
+
+
+@app.route('/api/recipes', methods=['POST'])
+def create_recipe():
+    data = request.get_json()
+    recipe = data.get("recipeData")
+
+    if not recipe:
+        return jsonify({"error": "No recipe data provided"}), 400
+
+    # Generate a simple ID (or use a database ID)
+    recipe_id = str(len(saved_recipes) + 1)
+    recipe["id"] = recipe_id
+
+    # Save in memory (replace with database in production)
+    saved_recipes[recipe_id] = recipe
+
+    return jsonify(recipe), 201
+
+@app.route('/api/recipes', methods=['GET'])
+def get_recipes():
+    # Return all saved recipes
+    return jsonify(list(saved_recipes.values())), 200
 
 if __name__ == '__main__':
     app.run(port=3002, debug=True)
