@@ -16,7 +16,7 @@ SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api*": {"origins": "*"}})
 
 # ----------------------------
 # Gemini API route (replaces OpenAI)
