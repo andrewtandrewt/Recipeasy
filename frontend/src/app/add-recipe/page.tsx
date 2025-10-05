@@ -6,6 +6,9 @@ import { ImportedRecipe } from '../lib/types'
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle , CardDescription} from '../components/ui/card'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
+import { RecipeSaver } from '../lib/recipe-saver'
+import { Sedgwick_Ave_Display } from 'next/font/google';
+import { Navigation } from '../components/navigation'
 
 
 export default function AddRecipe() {
@@ -17,34 +20,32 @@ export default function AddRecipe() {
     setImportedRecipe(recipe)
   }
 
-  const handleSave = async () => {
-    if (!importedRecipe) return
+  
+const handleSave = async () => {
+  if (!importedRecipe) return;
 
-    setSaving(true)
-    try {
-      const response = await fetch('/api/recipes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipeData: importedRecipe })
-      })
-
-      if (response.ok) {
-        const savedRecipe = await response.json()
-        router.push(`/recipes/${savedRecipe.id}`)
-      } else {
-        console.error('Failed to save recipe')
-      }
-    } catch (error) {
-      console.error('Error saving recipe:', error)
-    } finally {
-      setSaving(false)
+  setSaving(true);
+  try {
+    const saved = await RecipeSaver.saveRecipeToBackend(importedRecipe);
+    if (saved) {
+      router.push(`/browse-recipes/${saved.id}`); // navigate to saved recipe
+    } else {
+      console.error("Could not save recipe");
+      alert("Failed to save recipe");
     }
+  } catch (err) {
+    console.error(err);
+    alert("Error saving recipe");
+  } finally {
+    setSaving(false);
   }
+};
 
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8">
-      <h1 className="text-2xl font-bold mb-4">Add a New Recipe</h1>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <h1 className="text-2xl font-bold mb-4"></h1>
       <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-4">Import Recipe</h1>

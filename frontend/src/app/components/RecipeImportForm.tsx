@@ -181,10 +181,10 @@ export default function RecipeImportForm({onImport, isLoading = false }: RecipeI
             </div>
             <Button 
                onClick={handleTextImport} 
-            //   disabled={isImporting || isLoading}
+              disabled={isImporting || isLoading}
               className="w-full"
             >
-              {/* {isImporting ? 'Processing...' : 'Import from Text'} */}
+              {isImporting ? 'Processing...' : 'Import from Text'}
             </Button>
           </TabsContent>
         </Tabs>

@@ -1,0 +1,43 @@
+import { NextResponse } from 'next/server'
+
+const recipes = [
+  {
+    id: "1",
+    title: "Spaghetti Bolognese",
+    description: "A hearty and flavorful Italian classic.",
+    imageUrl: "https://images.unsplash.com/photo-1603133872878-684f208fb84b",
+    cookingTime: 30,
+    servings: 2,
+    difficulty: "Easy",
+    cuisine: "Italian",
+    createdAt: new Date().toISOString(),
+    ingredients: [
+      { id: "1", name: "Spaghetti", amount: "200", unit: "g" },
+      { id: "2", name: "Ground beef", amount: "250", unit: "g" },
+      { id: "3", name: "Tomato sauce", amount: "1", unit: "cup" },
+    ],
+    steps: [
+      { id: "1", order: 1, instruction: "Boil pasta until al dente." },
+      { id: "2", order: 2, instruction: "Cook beef in a pan until browned." },
+      { id: "3", order: 3, instruction: "Add tomato sauce and simmer for 10 minutes." },
+      { id: "4", order: 4, instruction: "Combine with pasta and serve hot." },
+    ],
+    tags: [{ tag: { name: "Italian" } }, { tag: { name: "Dinner" } }],
+    categories: [{ category: { name: "Main Course" } }],
+    user: { name: "Chef Mario", image: "" },
+    savedBy: [],
+  },
+]
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const recipe = recipes.find((r) => r.id === params.id)
+
+  if (!recipe) {
+    return NextResponse.json({ error: 'Recipe not found' }, { status: 404 })
+  }
+
+  return NextResponse.json(recipe)
+}
