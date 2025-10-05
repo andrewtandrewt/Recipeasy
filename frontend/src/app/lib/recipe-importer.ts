@@ -26,7 +26,7 @@ export class RecipeImporter {
     try {
       // Call your Flask backend API instead of Gemini directly
       const response = await axios.post('http://localhost:3002/api/gemini', {
-        prompt: `Extract recipe information from the following text and return it as a JSON object with this structure:\n{\n  "title": "Recipe title",\n  "description": "Brief description",\n  "ingredients": [{"name": "ingredient name", "amount": "quantity", "unit": "unit"}],\n  "steps": [{"order": 1, "instruction": "step instruction"}],\n  "cookingTime": 30,\n  "servings": 4,\n  "difficulty": "easy|medium|hard",\n  "cuisine": "cuisine type"\n}\nText: ${text}`
+        prompt: `Extract recipe information from the following text and return it as a JSON object with this structure:\n{\n  "title": "Recipe title",\n  "description": "Brief description",\n  "ingredients": [{"name": "ingredient name", "amount": "quantity", "unit": "unit"}],\n  "steps": [{"order": 1, "instruction": "step instruction"}],\n  "cookingTime": 30(Should include rest time as well),\n  "servings": 4,\n  "difficulty": "easy|medium|hard",\n "tags": ["italian", "noodle", "etc"],\n  "cuisine": "cuisine type"\n}\nText: ${text}`
       });
       const content = response.data.result;
       const cleanedText = content.replace(/```[a-z]*\n?/g, "").replace(/```/g, "").trim();

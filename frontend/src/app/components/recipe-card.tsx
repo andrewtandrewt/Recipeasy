@@ -17,8 +17,11 @@ interface RecipeCardProps {
     servings?: number
     difficulty?: string
     cuisine?: string
-    tags?: Array<{ tag: { name: string } }>
-    categories?: Array<{ category: { name: string } }>
+    tags?: Array<
+      | string
+      | { name: string }
+      | { tag?: { name: string } }
+    >
   }
   isSaved?: boolean
   onSave?: (recipeId: string) => void
@@ -36,7 +39,7 @@ export function RecipeCard({ recipe, isSaved = false, onSave, onUnsave }: Recipe
 
   return (
     <Card className="group overflow-hidden transition-all duration-200 hover:shadow-lg">
-      <Link href={`/recipes/${recipe.id}`}>
+      <Link href={`/browse-recipes/${recipe.id}`}>
         <div className="relative aspect-[4/3] overflow-hidden">
           {recipe.imageUrl ? (
             <Image
@@ -54,7 +57,7 @@ export function RecipeCard({ recipe, isSaved = false, onSave, onUnsave }: Recipe
       </Link>
       
       <CardHeader className="pb-2">
-        <Link href={`/recipes/${recipe.id}`}>
+        <Link href={`/browse-recipes/${recipe.id}`}>
           <h3 className="line-clamp-2 text-lg font-semibold hover:text-primary transition-colors">
             {recipe.title}
           </h3>
@@ -95,14 +98,22 @@ export function RecipeCard({ recipe, isSaved = false, onSave, onUnsave }: Recipe
 
         {recipe.tags && recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {recipe.tags.slice(0, 3).map((tag, index) => (
-              <span
-                key={index}
-                className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full"
-              >
-                {tag.tag.name}
-              </span>
-            ))}
+            {recipe.tags.slice(0, 3).map((tag, index) => {
+              const tagName = typeof tag === 'string'
+                ? tag
+                : tag?.tag?.name ?? (tag as { name?: string }).name
+
+              if (!tagName) return null
+
+              return (
+                <span
+                  key={index}
+                  className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full"
+                >
+                  {tagName}
+                </span>
+              )
+            })}
             {recipe.tags.length > 3 && (
               <span className="text-xs text-muted-foreground">
                 +{recipe.tags.length - 3} more

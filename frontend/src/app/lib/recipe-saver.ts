@@ -5,12 +5,13 @@
   export class RecipeSaver {
   static async saveRecipeToBackend(recipe: ImportedRecipe): Promise<{ id: string } | null> {
     try {
-      const response = await axios.post('http://localhost:3002/api/recipes', {
+      const response = await axios.post(`http://localhost:3002/api/recipes`, {
         recipeData: recipe,
         userId: "public" // no authentication
       });
 
       if (response.status === 201) {
+        console.log(response.data)
         return response.data; // returns { id: "..." }
       } else {
         console.error('Failed to save recipe:', response.statusText);

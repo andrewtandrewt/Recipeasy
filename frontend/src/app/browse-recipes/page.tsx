@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Navigation } from '../components/navigation'
 import { RecipeCard } from '../components/recipe-card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Card, CardContent } from '../components/ui/card'
-import { Search, Filter, Plus } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import Link from 'next/link'
 
 interface Recipe {
@@ -18,105 +18,64 @@ interface Recipe {
   servings?: number
   difficulty?: string
   cuisine?: string
-  tags: Array<{ tag: { name: string } }>
-  categories: Array<{ category: { name: string } }>
-  savedBy: Array<{ id: string }>
+  sourceUrl?: string
+  sourceType?: string
 }
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filters, setFilters] = useState({
-    cuisine: '',
-    difficulty: '',
-    tags: ''
-  })
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
+  const [filters, setFilters] = useState({ cuisine: '', difficulty: '' })
 
   useEffect(() => {
-    fetchRecipes()
-  }, [page, searchQuery, filters])
-
-  const fetchRecipes = async () => {
-    try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '12',
-        ...(searchQuery && { search: searchQuery }),
-        ...(filters.cuisine && { cuisine: filters.cuisine }),
-        ...(filters.difficulty && { difficulty: filters.difficulty }),
-        ...(filters.tags && { tags: filters.tags })
-      })
-
-      const response = await fetch(`/api/recipes?${params}`)
-      if (response.ok) {
-        const data = await response.json()
-        if (page === 1) {
-          setRecipes(data.recipes)
+    const loadRecipes = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch('http://localhost:3002/api/recipes')
+        if (response.ok) {
+          const data = await response.json()
+          setRecipes(Array.isArray(data) ? data : [])
         } else {
-          setRecipes(prev => [...prev, ...data.recipes])
+          console.error('Failed to fetch recipes')
         }
-        setHasMore(data.pagination.page < data.pagination.pages)
+      } catch (err) {
+        console.error('Error fetching recipes:', err)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching recipes:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    loadRecipes()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    setPage(1)
-    fetchRecipes()
   }
 
-  const handleLoadMore = () => {
-    setPage(prev => prev + 1)
-  }
+  const filteredRecipes = useMemo(() => {
+    const search = searchQuery.trim().toLowerCase()
 
-  const handleSave = async (recipeId: string) => {
-    try {
-      await fetch('/api/saved', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipeId })
-      })
-      
-      setRecipes(prev => prev.map(recipe => 
-        recipe.id === recipeId 
-          ? { ...recipe, savedBy: [...recipe.savedBy, { id: 'temp' }] }
-          : recipe
-      ))
-    } catch (error) {
-      console.error('Error saving recipe:', error)
-    }
-  }
+    return recipes.filter((recipe) => {
+      const matchesSearch =
+        !search ||
+        recipe.title.toLowerCase().includes(search) ||
+        (recipe.description?.toLowerCase().includes(search) ?? false)
 
-  const handleUnsave = async (recipeId: string) => {
-    try {
-      await fetch('/api/saved', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipeId })
-      })
-      
-      setRecipes(prev => prev.map(recipe => 
-        recipe.id === recipeId 
-          ? { ...recipe, savedBy: recipe.savedBy.filter(saved => saved.id !== 'temp') }
-          : recipe
-      ))
-    } catch (error) {
-      console.error('Error unsaving recipe:', error)
-    }
-  }
+      const matchesCuisine =
+        !filters.cuisine || recipe.cuisine?.toLowerCase() === filters.cuisine.toLowerCase()
+
+      const matchesDifficulty =
+        !filters.difficulty || recipe.difficulty?.toLowerCase() === filters.difficulty.toLowerCase()
+
+      return matchesSearch && matchesCuisine && matchesDifficulty
+    })
+  }, [recipes, searchQuery, filters])
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
@@ -134,7 +93,7 @@ export default function RecipesPage() {
           </Link>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search & Filters */}
         <Card className="mb-8">
           <CardContent className="pt-6">
             <form onSubmit={handleSearch} className="space-y-4">
@@ -179,8 +138,9 @@ export default function RecipesPage() {
                 </select>
 
                 <Button
+                  type="button"
                   variant="outline"
-                  onClick={() => setFilters({ cuisine: '', difficulty: '', tags: '' })}
+                  onClick={() => setFilters({ cuisine: '', difficulty: '' })}
                 >
                   Clear Filters
                 </Button>
@@ -192,8 +152,8 @@ export default function RecipesPage() {
         {/* Recipes Grid */}
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Card key={index} className="animate-pulse">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <Card key={idx} className="animate-pulse">
                 <div className="aspect-[4/3] bg-muted rounded-t-lg"></div>
                 <CardContent className="p-6">
                   <div className="h-6 bg-muted rounded mb-2"></div>
@@ -202,27 +162,18 @@ export default function RecipesPage() {
               </Card>
             ))}
           </div>
-        ) : recipes.length > 0 ? (
+        ) : filteredRecipes.length > 0 ? (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {recipes.map((recipe) => (
+              {filteredRecipes.map(recipe => (
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  isSaved={recipe.savedBy.length > 0}
-                  onSave={handleSave}
-                  onUnsave={handleUnsave}
+                  onSave={() => {}}
+                  onUnsave={() => {}}
                 />
               ))}
             </div>
-
-            {hasMore && (
-              <div className="text-center">
-                <Button onClick={handleLoadMore} variant="outline">
-                  Load More Recipes
-                </Button>
-              </div>
-            )}
           </>
         ) : (
           <div className="text-center py-16">

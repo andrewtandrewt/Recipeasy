@@ -11,6 +11,7 @@ load_dotenv()
 
 # In-memory storage for saved recipes 
 saved_recipes = {"1": {
+  "id": "1",
   "title": "Spaghetti Aglio e Olio",
   "description": "A simple and classic Italian spaghetti with garlic, olive oil, and chili flakes.",
   "ingredients": [
@@ -32,7 +33,11 @@ saved_recipes = {"1": {
   "cookingTime": 20,
   "servings": 4,
   "difficulty": "easy",
-  "cuisine": "Italian"
+  "cuisine": "Italian",
+  "sourceUrl": "https://example.com/spaghetti-aglio-e-olio",
+  "sourceType": "manual",
+  "savedBy": [1, 2],
+  "tags": ["pasta", "quick", "vegetarian"]
 }}
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -42,7 +47,7 @@ SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3001"])
+CORS(app)
 
 # ----------------------------
 # Gemini API route (replaces OpenAI)
@@ -137,7 +142,13 @@ def search_recipes():
     
 
 
-@app.route('/api/recipes', methods=['POST'])
+@app.route('/api/recipes', methods=['GET'], strict_slashes=False)
+def list_recipes():
+    """Return all saved recipes for browse views."""
+    return jsonify(list(saved_recipes.values())), 200
+
+
+@app.route('/api/recipes', methods=['POST'], strict_slashes=False)
 def create_recipe():
     data = request.get_json()
     recipe = data.get("recipeData")
@@ -154,10 +165,13 @@ def create_recipe():
 
     return jsonify(recipe), 201
 
-@app.route('/api/recipes', methods=['GET'])
-def get_recipes():
-    # Return all saved recipes
-    return jsonify(list(saved_recipes.values())), 200
+
+@app.route("/api/recipes/<id>", strict_slashes=False)
+def get_recipe(id):
+    recipe = saved_recipes.get(id)
+    if recipe:
+        return jsonify(recipe)
+    return jsonify({"error": "Recipe not found"}), 404
 
 if __name__ == '__main__':
     app.run(port=3002, debug=True)

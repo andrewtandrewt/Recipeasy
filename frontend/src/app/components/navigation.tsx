@@ -44,7 +44,7 @@ export function Navigation() {
 
           {/* Navigation Links */}
           <div className="flex items-center space-x-4">
-            <Link href="/recipes">
+            <Link href="/browse-recipes">
               <Button>
                 Browse Recipes
               </Button>
