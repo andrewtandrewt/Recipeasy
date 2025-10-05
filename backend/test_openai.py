@@ -19,7 +19,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # Create a model instance
-model = genai.GenerativeModel("gemini-1.5-flash-latest")
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Send a simple test prompt
 prompt = "Give me a random fun fact about space."
