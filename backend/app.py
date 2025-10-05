@@ -27,7 +27,7 @@ def gemini_api():
     prompt = data.get('prompt')
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt)
         return jsonify({"result": response.text})
     except Exception as e:
@@ -36,15 +36,17 @@ def gemini_api():
 # ----------------------------
 # Get recipe info (Spoonacular)
 # ----------------------------
-@app.route('/api/recipe/<int:recipe_id>', methods=['GET'])
-def get_recipe(recipe_id):
-    params = {"apiKey": SPOONACULAR_API_KEY}
-    url = f"https://api.spoonacular.com/recipes/{recipe_id}/information"
-    response = requests.get(url, params=params)
-    if response.ok:
-        return jsonify(response.json())
-    else:
-        return jsonify({"error": "Spoonacular API error"}), 500
+# @app.route('/api/recipe/<int:recipe_id>', methods=['GET'])
+# def get_recipe(recipe_id):
+#     params = {"apiKey": SPOONACULAR_API_KEY}
+#     url = f"https://api.spoonacular.com/recipes/{recipe_id}/information"
+#     response = requests.get(url, params=params)
+#     if response.ok:
+#         print("Spoonacular API response:")
+#         print(response.json())
+#         return jsonify(response.json())
+#     else:
+#         return jsonify({"error": "Spoonacular API error"}), 500
 
 # ----------------------------
 # Parse recipe from URL

@@ -26,8 +26,9 @@ export class RecipeImporter {
         prompt: `Extract recipe information from the following text and return it as a JSON object with this structure:\n{\n  "title": "Recipe title",\n  "description": "Brief description",\n  "ingredients": [{"name": "ingredient name", "amount": "quantity", "unit": "unit"}],\n  "steps": [{"order": 1, "instruction": "step instruction"}],\n  "cookingTime": 30,\n  "servings": 4,\n  "difficulty": "easy|medium|hard",\n  "cuisine": "cuisine type"\n}\nText: ${text}`
       });
       const content = response.data.result;
-      if (!content) return null;
-      const recipeData = JSON.parse(content);
+      const cleanedText = content.replace(/```[a-z]*\n?/g, "").replace(/```/g, "").trim();
+      if (!cleanedText) return null;
+      const recipeData = JSON.parse(cleanedText);
       return {
         ...recipeData,
         sourceUrl: '',
@@ -42,6 +43,7 @@ export class RecipeImporter {
   private static async importFromYouTube(url: string): Promise<ImportedRecipe | null> {
     try {
       const response = await axios.get(url)
+      console.log(response)
       const $ = cheerio.load(response.data)
       
       // Extract basic info from YouTube page
